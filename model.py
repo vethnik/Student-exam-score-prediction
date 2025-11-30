@@ -45,6 +45,88 @@ def visualize_data(df):
     plt.title("Writing Score vs Math Score")
     plt.show()
 
+# Preprocessing and regression pipeline
+
+#                    ┌─────────────────────────────┐
+#                    │       INPUT FEATURES         │
+#                    │  (X: DataFrame with columns) │
+#                    └──────────────┬──────────────┘
+#                                   │
+#         ┌─────────────────────────┼─────────────────────────┐
+#         │                         │                         │
+#         ▼                         ▼                         ▼
+
+# ┌──────────────────────┐   ┌──────────────────────┐   (Optional)
+# │ Categorical Columns   │   │   Numeric Columns    │
+# │ e.g., gender, race    │   │ e.g., math score     │
+# └───────────┬──────────┘   └───────────┬──────────┘
+#             │                          │
+#             │                          │
+#             ▼                          ▼
+
+# ┌──────────────────────┐   ┌──────────────────────┐
+# │ OneHotEncoder         │   │   Passthrough        │
+# │ drop="first"          │   │ (kept as-is)         │
+# │ handle_unknown="ignore"│  │                       │
+# └───────────┬──────────┘   └───────────┬──────────┘
+#             │                          │
+#             └──────────┬───────────────┘
+#                        ▼
+
+#             ┌───────────────────────────────┐
+#             │  Combined Preprocessed Output  │
+#             │  (All data now numeric)        │
+#             └───────────────┬───────────────┘
+#                             ▼
+
+#             ┌───────────────────────────────┐
+#             │      Linear Regression        │
+#             │  (Trains on processed data)   │
+#             └───────────────┬───────────────┘
+#                             ▼
+
+#             ┌──────────────────────────────┐
+#             │         FINAL MODEL          │
+#             │    model.fit() / predict()   │
+#             └──────────────────────────────┘
+
+def build_pipeline(categorical_cols,numeric_cols):
+    preprocessor=ColumnTransformer(
+        transformers=[
+            ("cat",OneHotEncoder(drop='first',handle_unknown='ignore'),categorical_cols),
+            ("num",'passthrough',numeric_cols),
+        ]
+    )
+    model=Pipeline(steps=[
+        ("preprocess",preprocessor),
+        ("regreesor",LinearRegression())
+    ])
+    return model
+
+# training the model and evaluating it
+
+def train_and_evaluate(df):
+    x=df[[
+        'gender',
+        'race',
+        'parental level of education',
+        'lunch',
+        'test preparation course',
+        'reading score',
+        'writing score'
+    ]]
+    y=df['math score']
+    categorical_cols=[
+        'gender',
+        'race',
+        'parental level of education',
+        'lunch',
+        'test preparation course',
+    ]
+    numeric_cols=['reading score','writing score']
+    X_train,X_test,y_train,y_test=train_test_split(x,y,test_size=0.2,random_state=42)
+    
+
 
 visualize_data(df)
 load_data("StudentsPerformance.csv")
